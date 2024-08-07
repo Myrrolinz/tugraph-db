@@ -22,7 +22,6 @@
 namespace cypher {
 
 struct cypher_string_t {
-
     static constexpr uint64_t PREFIX_LENGTH = 4;
     static constexpr uint64_t INLINED_SUFFIX_LENGTH = 8;
     static constexpr uint64_t SHORT_STR_LENGTH = PREFIX_LENGTH + INLINED_SUFFIX_LENGTH;
@@ -66,7 +65,8 @@ struct cypher_string_t {
     void SetLongString(const char* value, uint64_t length) {
         len = length;
         std::memcpy(prefix, value, PREFIX_LENGTH);
-        std::memcpy(reinterpret_cast<char*>(overflowPtr), value + PREFIX_LENGTH, length - PREFIX_LENGTH);
+        std::memcpy(reinterpret_cast<char*>(overflowPtr), value + PREFIX_LENGTH,
+                    length - PREFIX_LENGTH);
     }
 
     std::string GetAsShortString() const {

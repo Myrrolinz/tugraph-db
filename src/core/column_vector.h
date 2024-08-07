@@ -27,8 +27,8 @@ constexpr size_t DEFAULT_VECTOR_CAPACITY = 2048;
 
 class ColumnVector {
     friend class StringColumn;
- public:
 
+ public:
     explicit ColumnVector(size_t element_size, size_t capacity = DEFAULT_VECTOR_CAPACITY)
         : element_size_(element_size),
           capacity_(capacity),
@@ -58,7 +58,7 @@ class ColumnVector {
         capacity_ = other.capacity_;
         data_ = std::unique_ptr<uint8_t[]>(new uint8_t[other.element_size_ * other.capacity_]);
         std::copy(other.data_.get(), other.data_.get() + other.element_size_
-                    * other.capacity_,data_.get());
+                    * other.capacity_, data_.get());
         bitmask_ = other.bitmask_;
         overflow_buffer_capacity_ = other.overflow_buffer_capacity_;
         overflow_buffer_ = std::unique_ptr<uint8_t[]>(new uint8_t[other.overflow_buffer_capacity_]);
@@ -162,8 +162,9 @@ class ColumnVector {
     }
 
     // insert data into column vector
-    static void InsertIntoColumnVector(ColumnVector* column_vector, const lgraph_api::FieldData& field,
-                                        uint32_t pos) {
+    static void InsertIntoColumnVector(ColumnVector* column_vector,
+                                       const lgraph_api::FieldData& field,
+                                       uint32_t pos) {
         switch (field.type) {
             case lgraph_api::FieldType::BOOL:
                 column_vector->SetValue(pos, field.AsBool());
@@ -198,6 +199,7 @@ class ColumnVector {
         overflow_buffer_ = std::move(new_buffer);
         overflow_buffer_capacity_ = new_capacity;
     }
+
  private:
     uint32_t element_size_;  // size of each element in bytes
     uint32_t capacity_;  // number of elements
