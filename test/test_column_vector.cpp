@@ -1,3 +1,17 @@
+/**
+ * Copyright 2022 AntGroup CO., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ */
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -59,7 +73,7 @@ TEST(ColumnVectorTest, SetNullAndCheck) {
 
 TEST(StringColumnTest, AddShortString) {
     ColumnVector cv(sizeof(cypher_string_t), 10);
-    std::string shortString = "abcd"; // 4 bytes short string
+    std::string shortString = "abcd";  // 4 bytes short string
     StringColumn::AddString(&cv, 0, shortString);
 
     auto& storedString = cv.GetValue<cypher_string_t>(0);
@@ -68,7 +82,7 @@ TEST(StringColumnTest, AddShortString) {
 
 TEST(StringColumnTest, AddLongString) {
     ColumnVector cv(sizeof(cypher_string_t), 10);
-    std::string longString = "This is a very long string to test overflow buffer."; // > 12 bytes
+    std::string longString = "This is a very long string to test overflow buffer.";  // > 12 bytes
     StringColumn::AddString(&cv, 0, longString);
 
     auto& storedString = cv.GetValue<cypher_string_t>(0);
@@ -80,7 +94,7 @@ TEST(ColumnVectorTest, CopyConstructor) {
     int32_t value = 99;
     cv1.SetValue<int32_t>(0, value);
 
-    ColumnVector cv2 = cv1; // Use copy constructor
+    ColumnVector cv2 = cv1;  // Use copy constructor
     EXPECT_EQ(cv2.GetValue<int32_t>(0), value);
 }
 
@@ -90,7 +104,7 @@ TEST(ColumnVectorTest, CopyAssignment) {
     cv1.SetValue<int32_t>(0, value);
 
     ColumnVector cv2(sizeof(int32_t), 5);
-    cv2 = cv1; // Use copy assignment operator
+    cv2 = cv1;  // Use copy assignment operator
     EXPECT_EQ(cv2.GetValue<int32_t>(0), value);
 }
 
@@ -104,13 +118,13 @@ TEST(ColumnVectorTest, ResizeOverflowBuffer) {
 
     // Access the overflow buffer to check for resize
     void* initialPtr = cv.AllocateOverflow(1);
-    cv.AllocateOverflow(2000); // Force resize
+    cv.AllocateOverflow(2000);  // Force resize
     void* newPtr = cv.AllocateOverflow(1);
-    EXPECT_NE(initialPtr, newPtr); // Pointer should change after resize
+    EXPECT_NE(initialPtr, newPtr);  // Pointer should change after resize
 }
 
 TEST(ColumnVectorTest, AccessEmptyVector) {
-    ColumnVector cv(sizeof(int32_t), 0); // 容量为0
+    ColumnVector cv(sizeof(int32_t), 0);  // 容量为0
     EXPECT_THROW(cv.SetValue<int32_t>(0, 42), std::out_of_range);
     EXPECT_THROW(cv.GetValue<int32_t>(0), std::out_of_range);
 }

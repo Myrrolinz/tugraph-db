@@ -1,3 +1,17 @@
+/**
+ * Copyright 2022 AntGroup CO., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ */
+
 #pragma once
 
 #include <cstdint>
@@ -13,7 +27,7 @@ constexpr size_t DEFAULT_VECTOR_CAPACITY = 2048;
 
 class ColumnVector {
     friend class StringColumn;
-public:
+ public:
 
     explicit ColumnVector(size_t element_size, size_t capacity = DEFAULT_VECTOR_CAPACITY)
         : element_size_(element_size),
@@ -32,8 +46,10 @@ public:
           overflow_buffer_capacity_(other.overflow_buffer_capacity_),
           overflow_buffer_(new uint8_t[other.overflow_buffer_capacity_]),
           overflow_offset_(other.overflow_offset_) {
-        std::copy(other.data_.get(), other.data_.get() + other.element_size_ * other.capacity_, data_.get());
-        std::copy(other.overflow_buffer_.get(), other.overflow_buffer_.get() + other.overflow_buffer_capacity_, overflow_buffer_.get());
+        std::copy(other.data_.get(), other.data_.get() + other.element_size_
+                    * other.capacity_, data_.get());
+        std::copy(other.overflow_buffer_.get(), other.overflow_buffer_.get()
+                    + other.overflow_buffer_capacity_, overflow_buffer_.get());
     }
 
     ColumnVector& operator=(const ColumnVector& other) {
@@ -41,11 +57,13 @@ public:
         element_size_ = other.element_size_;
         capacity_ = other.capacity_;
         data_ = std::unique_ptr<uint8_t[]>(new uint8_t[other.element_size_ * other.capacity_]);
-        std::copy(other.data_.get(), other.data_.get() + other.element_size_ * other.capacity_, data_.get());
+        std::copy(other.data_.get(), other.data_.get() + other.element_size_
+                    * other.capacity_,data_.get());
         bitmask_ = other.bitmask_;
         overflow_buffer_capacity_ = other.overflow_buffer_capacity_;
         overflow_buffer_ = std::unique_ptr<uint8_t[]>(new uint8_t[other.overflow_buffer_capacity_]);
-        std::copy(other.overflow_buffer_.get(), other.overflow_buffer_.get() + other.overflow_buffer_capacity_, overflow_buffer_.get());
+        std::copy(other.overflow_buffer_.get(), other.overflow_buffer_.get()
+                    + other.overflow_buffer_capacity_, overflow_buffer_.get());
         overflow_offset_ = other.overflow_offset_;
         return *this;
     }
@@ -102,12 +120,14 @@ public:
         std::memcpy(row_data, data_.get() + pos * element_size_, element_size_);
     }
 
-    void CopyFromVectorData(uint8_t* dst_data, const ColumnVector* src_vector, const uint8_t* src_vector_data) {
+    void CopyFromVectorData(uint8_t* dst_data, const ColumnVector* src_vector,
+                            const uint8_t* src_vector_data) {
         std::memcpy(dst_data, src_vector_data, src_vector->GetElementSize());
     }
 
     void CopyFromVectorData(uint64_t dst_pos, const ColumnVector* src_vector, uint64_t src_pos) {
-        std::memcpy(data_.get() + dst_pos * element_size_, src_vector->data() + src_pos * element_size_, element_size_);
+        std::memcpy(data_.get() + dst_pos * element_size_, src_vector->data() + src_pos
+                    * element_size_, element_size_);
     }
 
     void* AllocateOverflow(uint64_t size) const {
@@ -119,7 +139,7 @@ public:
         return ptr;
     }
 
-    // 获取字段类型的大小
+    // fetch field size
     static size_t GetFieldSize(lgraph_api::FieldType type) {
         switch (type) {
             case lgraph_api::FieldType::BOOL:
@@ -141,8 +161,9 @@ public:
         }
     }
 
-    // 插入数据到ColumnVector
-    static void InsertIntoColumnVector(ColumnVector* column_vector, const lgraph_api::FieldData& field, uint32_t pos) {
+    // insert data into column vector
+    static void InsertIntoColumnVector(ColumnVector* column_vector, const lgraph_api::FieldData& field,
+                                        uint32_t pos) {
         switch (field.type) {
             case lgraph_api::FieldType::BOOL:
                 column_vector->SetValue(pos, field.AsBool());
@@ -170,16 +191,16 @@ public:
         }
     }
 
-private:
+ private:
     void ResizeOverflowBuffer(uint64_t new_capacity) const {
         auto new_buffer = std::make_unique<uint8_t[]>(new_capacity);
         std::memcpy(new_buffer.get(), overflow_buffer_.get(), overflow_offset_);
         overflow_buffer_ = std::move(new_buffer);
         overflow_buffer_capacity_ = new_capacity;
     }
-private:
-    uint32_t element_size_; // size of each element in bytes
-    uint32_t capacity_; // number of elements
+ private:
+    uint32_t element_size_;  // size of each element in bytes
+    uint32_t capacity_;  // number of elements
     std::unique_ptr<uint8_t[]> data_;
     BitMask bitmask_;
     mutable uint64_t overflow_buffer_capacity_;
@@ -189,7 +210,7 @@ private:
 
 
 class StringColumn {
-public:
+ public:
     // add string to vector
     static void AddString(ColumnVector* vector, uint32_t vectorPos, cypher_string_t& srcStr) {
         auto& dstStr = vector->GetValue<cypher_string_t>(vectorPos);
@@ -201,7 +222,8 @@ public:
         }
     }
 
-    static void AddString(ColumnVector* vector, uint32_t vectorPos, const char* srcStr, uint64_t length) {
+    static void AddString(ColumnVector* vector, uint32_t vectorPos, const char* srcStr,
+                          uint64_t length) {
         auto& dstStr = vector->GetValue<cypher_string_t>(vectorPos);
         if (cypher_string_t::IsShortString(length)) {
             dstStr.SetShortString(srcStr, length);
@@ -215,7 +237,8 @@ public:
         AddString(vector, vectorPos, srcStr.data(), srcStr.length());
     }
 
-    static cypher_string_t& ReserveString(ColumnVector* vector, uint32_t vectorPos, uint64_t length) {
+    static cypher_string_t& ReserveString(ColumnVector* vector, uint32_t vectorPos,
+                                          uint64_t length) {
         auto& dstStr = vector->GetValue<cypher_string_t>(vectorPos);
         dstStr.len = length;
         if (!cypher_string_t::IsShortString(length)) {
@@ -240,7 +263,8 @@ public:
         }
     }
 
-    static void AddString(ColumnVector* vector, cypher_string_t& dstStr, const char* srcStr, uint64_t length) {
+    static void AddString(ColumnVector* vector, cypher_string_t& dstStr, const char* srcStr,
+                          uint64_t length) {
         if (cypher_string_t::IsShortString(length)) {
             dstStr.SetShortString(srcStr, length);
         } else {
@@ -249,7 +273,8 @@ public:
         }
     }
 
-    static void AddString(ColumnVector* vector, cypher_string_t& dstStr, const std::string& srcStr) {
+    static void AddString(ColumnVector* vector, cypher_string_t& dstStr,
+                          const std::string& srcStr) {
         AddString(vector, dstStr, srcStr.data(), srcStr.length());
     }
 
@@ -259,7 +284,8 @@ public:
         if (cypher_string_t::IsShortString(srcStr.len)) {
             dstStr.SetShortString(reinterpret_cast<const char*>(srcStr.prefix), srcStr.len);
         } else {
-            dstStr.overflowPtr = reinterpret_cast<uint64_t>(vector->AllocateOverflow(static_cast<uint64_t>(srcStr.len)));
+            dstStr.overflowPtr = reinterpret_cast<uint64_t>(
+                vector->AllocateOverflow(static_cast<uint64_t>(srcStr.len)));
             dstStr.SetLongString(reinterpret_cast<const char*>(srcStr.prefix), srcStr.len);
         }
     }

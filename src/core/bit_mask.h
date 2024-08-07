@@ -1,3 +1,17 @@
+/**
+ * Copyright 2022 AntGroup CO., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ */
+
 #pragma once
 
 #include <memory>
@@ -63,12 +77,12 @@ constexpr uint64_t HIGH_BITMASKS[65] = {0x0, 0x8000000000000000, 0xc000000000000
     0xfffffffffffffffe, 0xffffffffffffffff};
 
 class BitMask {
-public:
+ public:
     static constexpr uint64_t NO_NULL_ENTRY = 0;
     static constexpr uint64_t ALL_NULL_ENTRY = ~uint64_t(NO_NULL_ENTRY);
-    static constexpr uint64_t BITS_PER_ENTRY_LOG2 = 6; // 64 bits per entry
+    static constexpr uint64_t BITS_PER_ENTRY_LOG2 = 6;  // 64 bits per entry
     static constexpr uint64_t BITS_PER_ENTRY = (uint64_t)1 << BITS_PER_ENTRY_LOG2;
-    static constexpr uint64_t BYTES_PER_ENTRY = BITS_PER_ENTRY >> 3; // 8 bytes per entry
+    static constexpr uint64_t BYTES_PER_ENTRY = BITS_PER_ENTRY >> 3;  // 8 bytes per entry
 
     explicit BitMask(uint64_t capacity) : may_contain_nulls_{false} {
         auto num_null_entries = (capacity + BITS_PER_ENTRY - 1) / BITS_PER_ENTRY;
@@ -138,14 +152,15 @@ public:
 
     static uint64_t GetNumEntries(uint64_t num_bits) {
         return (num_bits >> BITS_PER_ENTRY_LOG2) +
-               ((num_bits - (num_bits << BITS_PER_ENTRY_LOG2)) == 0 ? 0 : 1); // 应该是右移？
+               ((num_bits - (num_bits << BITS_PER_ENTRY_LOG2)) == 0 ? 0 : 1);
     }
 
     void resize(uint64_t capacity) {
         auto num_entries = (capacity + BITS_PER_ENTRY - 1) / BITS_PER_ENTRY;
         auto resized_buffer = std::make_unique<uint64_t[]>(num_entries);
         if (data_) {
-            std::memcpy(resized_buffer.get(), data_, std::min(size_, num_entries) * sizeof(uint64_t));
+            std::memcpy(resized_buffer.get(), data_,
+                std::min(size_, num_entries) * sizeof(uint64_t));
         }
         buffer_ = std::move(resized_buffer);
         data_ = buffer_.get();
@@ -159,19 +174,23 @@ public:
         SetNullRange(data_, offset, num_bits_to_set, is_null);
     }
 
-    static void SetNullRange(uint64_t* null_entries, uint64_t offset, uint64_t num_bits_to_set, bool is_null) {
+    static void SetNullRange(uint64_t* null_entries, uint64_t offset,
+                             uint64_t num_bits_to_set, bool is_null) {
         auto [first_entry_pos, first_bit_pos] = GetEntryAndBitPos(offset);
         auto [last_entry_pos, last_bit_pos] = GetEntryAndBitPos(offset + num_bits_to_set);
 
         if (last_entry_pos > first_entry_pos + 1) {
-            std::fill(null_entries + first_entry_pos + 1, null_entries + last_entry_pos, is_null ? ALL_NULL_ENTRY : NO_NULL_ENTRY);
+            std::fill(null_entries + first_entry_pos + 1, null_entries + last_entry_pos,
+                      is_null ? ALL_NULL_ENTRY : NO_NULL_ENTRY);
         }
 
         if (first_entry_pos == last_entry_pos) {
             if (is_null) {
-                null_entries[first_entry_pos] |= (~LOWER_BITMASKS[first_bit_pos] & ~HIGH_BITMASKS[BITS_PER_ENTRY - last_bit_pos]);
+                null_entries[first_entry_pos] |= (~LOWER_BITMASKS[first_bit_pos]
+                                & ~HIGH_BITMASKS[BITS_PER_ENTRY - last_bit_pos]);
             } else {
-                null_entries[first_entry_pos] &= (LOWER_BITMASKS[first_bit_pos] | HIGH_BITMASKS[BITS_PER_ENTRY - last_bit_pos]);
+                null_entries[first_entry_pos] &= (LOWER_BITMASKS[first_bit_pos]
+                                | HIGH_BITMASKS[BITS_PER_ENTRY - last_bit_pos]);
             }
         } else {
             if (is_null) {
@@ -187,14 +206,14 @@ public:
             }
         }
     }
-    
-private:
+
+ private:
     static std::pair<uint64_t, uint64_t> GetEntryAndBitPos(uint64_t pos) {
         auto entry_pos = pos >> BITS_PER_ENTRY_LOG2;
         return {entry_pos, pos - (entry_pos << BITS_PER_ENTRY_LOG2)};
     }
 
-private:
+ private:
     uint64_t* data_;
     size_t size_;
     std::unique_ptr<uint64_t[]> buffer_;
